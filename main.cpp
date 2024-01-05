@@ -10,6 +10,10 @@ extern "C" {
 
 #define SCREEN_WIDTH	640
 #define SCREEN_HEIGHT	480
+#define SPAWN_X 0.0
+#define SPAWN_Y 0.0
+#define BORDER_X 1.0
+#define BORDER_Y 1.0
 
 
 // narysowanie napisu txt na powierzchni screen, zaczynaj¹c od punktu (x, y)
@@ -94,7 +98,7 @@ extern "C"
 #endif
 int main(int argc, char **argv) {
 	int t1, t2, quit, frames, rc;
-	double delta, worldTime, fpsTimer, fps, distance, etiSpeed;
+	double delta, worldTime, fpsTimer, fps, distance, distanceY, etiSpeed, etiSpeedY;
 	SDL_Event event;
 	SDL_Surface *screen, *charset;
 	SDL_Surface *eti;
@@ -148,10 +152,10 @@ int main(int argc, char **argv) {
 	SDL_ShowCursor(SDL_DISABLE);
 
 	// wczytanie obrazka cs8x8.bmp
-	charset = SDL_LoadBMP("./cs8x8.bmp");
+	charset = SDL_LoadBMP("./images/cs8x8.bmp");
 	//charset = SDL_LoadBMP("./eti.bmp");
 	if(charset == NULL) {
-		printf("SDL_LoadBMP(cs8x8.bmp) error: %s\n", SDL_GetError());
+		printf("SDL_LoadBMP(images/cs8x8.bmp) error: %s\n", SDL_GetError());
 		SDL_FreeSurface(screen);
 		SDL_DestroyTexture(scrtex);
 		SDL_DestroyWindow(window);
@@ -161,11 +165,12 @@ int main(int argc, char **argv) {
 		};
 	SDL_SetColorKey(charset, true, 0x000000);
 
-	//eti = SDL_LoadBMP("./eti.bmp");
-	eti = SDL_LoadBMP("./cs8x8.bmp");
+	//eti = SDL_LoadBMP("./images/eti.bmp");
+	//eti = SDL_LoadBMP("./images/eti.bmp");
+	eti = SDL_LoadBMP("./images/player.bmp");
 	
 	if(eti == NULL) {
-		printf("SDL_LoadBMP(eti.bmp) error: %s\n", SDL_GetError());
+		printf("SDL_LoadBMP(images/player.bmp) error: %s\n", SDL_GetError());
 		SDL_FreeSurface(charset);
 		SDL_FreeSurface(screen);
 		SDL_DestroyTexture(scrtex);
@@ -188,8 +193,12 @@ int main(int argc, char **argv) {
 	fps = 0;
 	quit = 0;
 	worldTime = 0;
-	distance = 0;
-	etiSpeed = 1;
+	distance = SPAWN_X;
+	distanceY = SPAWN_Y;
+	etiSpeed = 0;
+	etiSpeedY = 0;
+
+	//petla rysowania
 
 	while(!quit) {
 		t2 = SDL_GetTicks();
@@ -205,13 +214,34 @@ int main(int argc, char **argv) {
 
 		worldTime += delta;
 
-		distance += etiSpeed * delta;
+
+		//distance += etiSpeed * delta;
+		if (distance <(BORDER_X * SCREEN_WIDTH / 100) && distance >-(BORDER_X * SCREEN_WIDTH / 100)) {
+		distance += etiSpeed * delta;}
+		else { distance -= etiSpeed * 0.04; }
+		//distanceY += etiSpeedY * delta;
+		if (distanceY <(BORDER_Y * SCREEN_HEIGHT / 100) && distanceY >-(BORDER_Y * SCREEN_HEIGHT / 100)) {
+			distanceY += etiSpeedY * delta;
+		}
+		else { distanceY -= etiSpeedY * 0.04; }
+		
 
 		SDL_FillRect(screen, NULL, zielony);
 
-		DrawSurface(screen, eti,
+		/*DrawSurface(screen, eti,
 		            SCREEN_WIDTH / 2 + sin(distance) * SCREEN_HEIGHT / 3,
-			    SCREEN_HEIGHT / 2 + cos(distance) * SCREEN_HEIGHT / 3);
+			    SCREEN_HEIGHT / 2 + cos(distance) * SCREEN_HEIGHT / 3);*/
+
+		DrawSurface(screen, eti,
+		            SCREEN_WIDTH / 2 + distance * SCREEN_HEIGHT / 10,
+			SCREEN_HEIGHT/2 + distanceY * SCREEN_HEIGHT / 10);
+
+		char logtext[128];
+
+		sprintf(logtext, "distance = %.1lf, distanceY = %.1lf", distance, distanceY);
+
+		SDL_SetWindowTitle(window, logtext);
+
 
 		fpsTimer += delta;
 		if(fpsTimer > 0.5) {
@@ -247,14 +277,17 @@ int main(int argc, char **argv) {
 			switch(event.type) {
 				case SDL_KEYDOWN:
 					if(event.key.keysym.sym == SDLK_ESCAPE) quit = 1;
-					else if(event.key.keysym.sym == SDLK_n) quit = 1;
-					else if(event.key.keysym.sym == SDLK_UP) etiSpeed = 0.3;
-					else if(event.key.keysym.sym == SDLK_LEFT) etiSpeed = -5.0;
-					else if(event.key.keysym.sym == SDLK_RIGHT) etiSpeed = 5.0;
-					else if(event.key.keysym.sym == SDLK_DOWN) etiSpeed = -0.3;
+					if (event.key.keysym.sym == SDLK_n) {
+						fpsTimer = 0;fps = 0;
+						worldTime = 0; distance = SPAWN_X; distanceY = SPAWN_Y; };
+					if(event.key.keysym.sym == SDLK_UP ) {etiSpeedY = -5.0;}
+					if(event.key.keysym.sym == SDLK_DOWN) { etiSpeedY = 5.0; }
+					if(event.key.keysym.sym == SDLK_LEFT ) { etiSpeed = -10.0; }
+					if(event.key.keysym.sym == SDLK_RIGHT) {etiSpeed = 10.0; }
 					break;
 				case SDL_KEYUP:
-					etiSpeed = 1.0;
+					etiSpeed = 0.0;
+					etiSpeedY = 0.0;
 					break;
 				case SDL_QUIT:
 					quit = 1;
