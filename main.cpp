@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
 	SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
-	SDL_SetWindowTitle(window, "Szablon do zdania drugiego 2017");
+	SDL_SetWindowTitle(window, "Jan Bancerewicz, s198099");
 
 
 	screen = SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 32,
@@ -149,6 +149,7 @@ int main(int argc, char **argv) {
 
 	// wczytanie obrazka cs8x8.bmp
 	charset = SDL_LoadBMP("./cs8x8.bmp");
+	//charset = SDL_LoadBMP("./eti.bmp");
 	if(charset == NULL) {
 		printf("SDL_LoadBMP(cs8x8.bmp) error: %s\n", SDL_GetError());
 		SDL_FreeSurface(screen);
@@ -160,7 +161,9 @@ int main(int argc, char **argv) {
 		};
 	SDL_SetColorKey(charset, true, 0x000000);
 
-	eti = SDL_LoadBMP("./eti.bmp");
+	//eti = SDL_LoadBMP("./eti.bmp");
+	eti = SDL_LoadBMP("./cs8x8.bmp");
+	
 	if(eti == NULL) {
 		printf("SDL_LoadBMP(eti.bmp) error: %s\n", SDL_GetError());
 		SDL_FreeSurface(charset);
@@ -204,7 +207,7 @@ int main(int argc, char **argv) {
 
 		distance += etiSpeed * delta;
 
-		SDL_FillRect(screen, NULL, czarny);
+		SDL_FillRect(screen, NULL, zielony);
 
 		DrawSurface(screen, eti,
 		            SCREEN_WIDTH / 2 + sin(distance) * SCREEN_HEIGHT / 3,
@@ -217,13 +220,18 @@ int main(int argc, char **argv) {
 			fpsTimer -= 0.5;
 			};
 
+		/*SDL_Surface* surface = SDL_GetWindowSurface(window);
+		Uint32 skyblue = SDL_MapRGB(surface->format, 65, 193, 193);
+		SDL_FillRect(surface, NULL, skyblue);
+		SDL_UpdateWindowSurface(window);*/
+
 		// tekst informacyjny / info text
 		DrawRectangle(screen, 4, 4, SCREEN_WIDTH - 8, 36, czerwony, niebieski);
 		//            "template for the second project, elapsed time = %.1lf s  %.0lf frames / s"
-		sprintf(text, "Szablon drugiego zadania, czas trwania = %.1lf s  %.0lf klatek / s", worldTime, fps);
+		sprintf(text, "King Donkey by Jan Bancerewicz, runtime = %.1lf s  %.0lf fps", worldTime, fps);
 		DrawString(screen, screen->w / 2 - strlen(text) * 8 / 2, 10, text, charset);
 		//	      "Esc - exit, \030 - faster, \031 - slower"
-		sprintf(text, "Esc - wyjscie, \030 - przyspieszenie, \031 - zwolnienie");
+		sprintf(text, "Esc - exit, arrows - move, n - new game");
 		DrawString(screen, screen->w / 2 - strlen(text) * 8 / 2, 26, text, charset);
 
 		SDL_UpdateTexture(scrtex, NULL, screen->pixels, screen->pitch);
@@ -231,13 +239,19 @@ int main(int argc, char **argv) {
 		SDL_RenderCopy(renderer, scrtex, NULL, NULL);
 		SDL_RenderPresent(renderer);
 
+
+		
+
 		// obs³uga zdarzeñ (o ile jakieœ zasz³y) / handling of events (if there were any)
 		while(SDL_PollEvent(&event)) {
 			switch(event.type) {
 				case SDL_KEYDOWN:
 					if(event.key.keysym.sym == SDLK_ESCAPE) quit = 1;
-					else if(event.key.keysym.sym == SDLK_UP) etiSpeed = 2.0;
-					else if(event.key.keysym.sym == SDLK_DOWN) etiSpeed = 0.3;
+					else if(event.key.keysym.sym == SDLK_n) quit = 1;
+					else if(event.key.keysym.sym == SDLK_UP) etiSpeed = 0.3;
+					else if(event.key.keysym.sym == SDLK_LEFT) etiSpeed = -5.0;
+					else if(event.key.keysym.sym == SDLK_RIGHT) etiSpeed = 5.0;
+					else if(event.key.keysym.sym == SDLK_DOWN) etiSpeed = -0.3;
 					break;
 				case SDL_KEYUP:
 					etiSpeed = 1.0;
