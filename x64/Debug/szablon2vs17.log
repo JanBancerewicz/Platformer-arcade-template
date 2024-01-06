@@ -1,14 +1,16 @@
 ﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(531,5): warning MSB8028: Katalog pośredni (x64\Debug\) zawiera pliki udostępnione z innego projektu (szablon2vs19.vcxproj). Może to spowodować niepoprawne zachowanie podczas oczyszczania i ponownej kompilacji.
   main.cpp
-C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(152,11): warning C4244: "inicjowanie": konwersja z "double" do "int", możliwa utrata danych
-C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(161,11): warning C4244: "inicjowanie": konwersja z "double" do "int", możliwa utrata danych
-C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(455,94): warning C4244: "argument": konwersja z "double" do "int", możliwa utrata danych
-C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(455,45): warning C4244: "argument": konwersja z "double" do "int", możliwa utrata danych
-C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(457,150): warning C4244: "argument": konwersja z "double" do "int", możliwa utrata danych
-C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(457,50): warning C4244: "argument": konwersja z "double" do "int", możliwa utrata danych
-C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(491,36): warning C4267: "argument": konwersja z "size_t" do "int", możliwa utrata danych
-C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(494,36): warning C4267: "argument": konwersja z "size_t" do "int", możliwa utrata danych
-C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(469,4): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(490,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(493,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(155,11): warning C4244: "inicjowanie": konwersja z "double" do "int", możliwa utrata danych
+C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(164,11): warning C4244: "inicjowanie": konwersja z "double" do "int", możliwa utrata danych
+C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(469,97): warning C4244: "argument": konwersja z "double" do "int", możliwa utrata danych
+C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(469,48): warning C4244: "argument": konwersja z "double" do "int", możliwa utrata danych
+C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(471,150): warning C4244: "argument": konwersja z "double" do "int", możliwa utrata danych
+C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(471,50): warning C4244: "argument": konwersja z "double" do "int", możliwa utrata danych
+C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(473,102): warning C4244: "argument": konwersja z "double" do "int", możliwa utrata danych
+C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(473,46): warning C4244: "argument": konwersja z "double" do "int", możliwa utrata danych
+C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(507,36): warning C4267: "argument": konwersja z "size_t" do "int", możliwa utrata danych
+C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(510,36): warning C4267: "argument": konwersja z "size_t" do "int", możliwa utrata danych
+C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(485,4): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(506,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\main.cpp(509,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   szablon2vs17.vcxproj -> C:\code\projekty\PP2\KingDonkey\Platformer-arcade-template\x64\Debug\szablon2vs17.exe

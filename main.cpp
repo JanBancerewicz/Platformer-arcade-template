@@ -8,8 +8,8 @@ extern "C" {
 #include"./SDL2-2.0.10/include/SDL_main.h"
 }
 
-#define SCREEN_WIDTH	640
-#define SCREEN_HEIGHT	480
+#define SCREEN_WIDTH 640
+#define SCREEN_HEIGHT 480
 #define SPAWN_X 0.0
 #define SPAWN_Y 3.84
 #define BORDER_X_OFFSET 0.0
@@ -23,13 +23,14 @@ extern "C" {
 #define TIMER 120.0
 #define PRINCESS_SPAWN_X -3.7
 #define PRINCESS_SPAWN_Y -2.8
+#define KING_SPAWN_X -1.65
+#define KING_SPAWN_Y -2.8
 #define STUDENT_MODE 0
 
-//todo rename variables
 
 
 struct PlatformInfo {
-	const int t[PLATFORMS][3]= { { 2, 0, 16 }, { 1, 3, 18 }, { 11, 6, 6 }, { 2, 9, 11 }, { 2, 9, 11 } };
+	const int t[PLATFORMS][3]= { { 0, 0, 20 }, { 1, 3, 18 }, { 11, 6, 6 }, { 2, 9, 11 }, { 2, 9, 11 } };
 	// {przesuniecie x, przesuniecie y, dlugosc}
 };
 
@@ -188,10 +189,11 @@ extern "C"
 #endif
 int main(int argc, char **argv) {
 	int t1, t2, quit, frames, rc;
-	double delta, worldTime, fpsTimer, fps, distance, distanceY, etiSpeed, etiSpeedY;
+	double delta, worldTime, fpsTimer, fps, distance, distanceY, moveSpeed, moveSpeedY;
 	SDL_Event event;
 	SDL_Surface *screen, *charset;
-	SDL_Surface *eti;
+	SDL_Surface *player;
+	SDL_Surface *king;
 	SDL_Surface *box;
 	SDL_Surface *princess;
 	SDL_Surface *ladder;
@@ -258,9 +260,9 @@ int main(int argc, char **argv) {
 		};
 	SDL_SetColorKey(charset, true, 0x000000);
 
-	eti = SDL_LoadBMP("./images/player.bmp");
+	player = SDL_LoadBMP("./images/player.bmp");
 	
-	if(eti == NULL) {
+	if(player == NULL) {
 		printf("SDL_LoadBMP(images/player.bmp) error: %s\n", SDL_GetError());
 		SDL_FreeSurface(charset);
 		SDL_FreeSurface(screen);
@@ -270,6 +272,19 @@ int main(int argc, char **argv) {
 		SDL_Quit();
 		return 1;
 		};
+
+	king = SDL_LoadBMP("./images/monkey.bmp");
+
+	if (king == NULL) {
+		printf("SDL_LoadBMP(images/player.bmp) error: %s\n", SDL_GetError());
+		SDL_FreeSurface(charset);
+		SDL_FreeSurface(screen);
+		SDL_DestroyTexture(scrtex);
+		SDL_DestroyWindow(window);
+		SDL_DestroyRenderer(renderer);
+		SDL_Quit();
+		return 1;
+	};
 
 	box = SDL_LoadBMP("./images/box.bmp");
 
@@ -332,8 +347,8 @@ int main(int argc, char **argv) {
 	worldTime = TIMER;
 	distance = SPAWN_X;
 	distanceY = SPAWN_Y;
-	etiSpeed = 0;
-	etiSpeedY = 0;
+	moveSpeed = 0;
+	moveSpeedY = 0;
 
 
 	//petla rysowania
@@ -383,18 +398,18 @@ int main(int argc, char **argv) {
 		if (custX)
 		{
 			if (distance <newtabX[1] && distance >newtabX[0]) {
-				distance += etiSpeed * delta;
+				distance += moveSpeed * delta;
 			}
-			else { distance -= etiSpeed * PUSHBACK; }
+			else { distance -= moveSpeed * PUSHBACK; }
 		}
 		else
 		{
 			if(newtabX[0] != 0 && newtabX[1] != 0)
 			{
 				if (distance <(BORDER_X_OFFSET + SCREEN_WIDTH / 100) && distance >-(BORDER_X_OFFSET + SCREEN_WIDTH / 100)) {
-					distance += etiSpeed * delta;
+					distance += moveSpeed * delta;
 				}
-				else { distance -= etiSpeed * PUSHBACK; }
+				else { distance -= moveSpeed * PUSHBACK; }
 			}
 		}
 
@@ -417,9 +432,9 @@ int main(int argc, char **argv) {
 		if (custY)
 		{
 			if (distanceY <newtabY[0]-0.16 && distanceY >newtabY[1]) {
-				distanceY += etiSpeedY * delta;
+				distanceY += moveSpeedY * delta;
 			}
-			else { distanceY -= etiSpeedY * PUSHBACK; }
+			else { distanceY -= moveSpeedY * PUSHBACK; }
 		}
 		else
 		{
@@ -427,23 +442,23 @@ int main(int argc, char **argv) {
 			{
 				if (newtabX[0] == 0 && newtabX[1] == 0)
 				{
-					distanceY -= etiSpeedY * PUSHBACK;
+					distanceY -= moveSpeedY * PUSHBACK;
 				}
 			}
 			else
 			{
 				if (distanceY <(BORDER_Y_OFFSET + SCREEN_HEIGHT / 100) && distanceY >-(BORDER_Y_OFFSET + SCREEN_HEIGHT / 100)) {
-					distanceY += etiSpeedY * delta;
+					distanceY += moveSpeedY * delta;
 				}
-				else { distanceY -= etiSpeedY * PUSHBACK; }
+				else { distanceY -= moveSpeedY * PUSHBACK; }
 			}
 			
 		}
 
 		/*if (distanceY <(BORDER_Y_OFFSET + SCREEN_HEIGHT / 100) && distanceY >-(BORDER_Y_OFFSET + SCREEN_HEIGHT / 100)) {
-			distanceY += etiSpeedY * delta;
+			distanceY += moveSpeedY * delta;
 		}
-		else { distanceY -= etiSpeedY * PUSHBACK; }*/
+		else { distanceY -= moveSpeedY * PUSHBACK; }*/
 
 
 		int offset = (STUDENT_MODE ? 0 : 20);
@@ -451,9 +466,11 @@ int main(int argc, char **argv) {
 		SDL_FillRect(screen, NULL, czarny);
 
 
-		DrawSurface(screen, eti, SCREEN_WIDTH / 2 + distance * SCREEN_HEIGHT / 10, SCREEN_HEIGHT/2 + distanceY * SCREEN_HEIGHT / 10);
+		DrawSurface(screen, player, SCREEN_WIDTH / 2 + distance * SCREEN_HEIGHT / 10, SCREEN_HEIGHT/2 + distanceY * SCREEN_HEIGHT / 10);
 
 		DrawSurface(screen, princess, SCREEN_WIDTH / 2 + PRINCESS_SPAWN_X * SCREEN_HEIGHT / 10 , SCREEN_HEIGHT / 2 + PRINCESS_SPAWN_Y * SCREEN_HEIGHT / 10 + offset);
+		
+		DrawSurface(screen, king, SCREEN_WIDTH / 2 + KING_SPAWN_X * SCREEN_HEIGHT / 10 , SCREEN_HEIGHT / 2 + KING_SPAWN_Y * SCREEN_HEIGHT / 10);
 
 
 		
@@ -497,7 +514,7 @@ int main(int argc, char **argv) {
 		DrawRectangle(screen, 0, SCREEN_HEIGHT-32, SCREEN_WIDTH, 32, niebieski, niebieski);
 
 		
-		//DrawPlatform(screen, box, 9, 1, 32, 8, 0);
+		//draw the platforms
 
 		for (int i = 0;i < PLATFORMS;i++)
 		{
@@ -507,12 +524,10 @@ int main(int argc, char **argv) {
 
 		for (int i = 0;i < LADDERS;i++)
 		{
-			//draw platform
+			//draw ladder
 			DrawPlatform(screen, ladder, l.t[i][0], l.t[i][1], 32, l.t[i][2], 0);
 		}
 		
-
-
 
 		SDL_UpdateTexture(scrtex, NULL, screen->pixels, screen->pitch);
 		SDL_RenderCopy(renderer, scrtex, NULL, NULL);
@@ -526,14 +541,14 @@ int main(int argc, char **argv) {
 					if (event.key.keysym.sym == SDLK_n) {
 						fpsTimer = 0;fps = 0;
 						worldTime = TIMER; distance = SPAWN_X; distanceY = SPAWN_Y; };
-					if(event.key.keysym.sym == SDLK_UP ) {etiSpeedY = -MOVESPEED_Y;}
-					if(event.key.keysym.sym == SDLK_DOWN) { etiSpeedY = MOVESPEED_X; }
-					if(event.key.keysym.sym == SDLK_LEFT ) { etiSpeed = -MOVESPEED_X; }
-					if(event.key.keysym.sym == SDLK_RIGHT) {etiSpeed = MOVESPEED_Y; }
+					if(event.key.keysym.sym == SDLK_UP ) { moveSpeedY = -MOVESPEED_Y;}
+					if(event.key.keysym.sym == SDLK_DOWN) { moveSpeedY = MOVESPEED_X; }
+					if(event.key.keysym.sym == SDLK_LEFT ) { moveSpeed = -MOVESPEED_X; }
+					if(event.key.keysym.sym == SDLK_RIGHT) { moveSpeed = MOVESPEED_Y; }
 					break;
 				case SDL_KEYUP:
-					etiSpeed = 0.0;
-					etiSpeedY = 0.0;
+					moveSpeed = 0.0;
+					moveSpeedY = 0.0;
 					break;
 				case SDL_QUIT:
 					quit = 1;
