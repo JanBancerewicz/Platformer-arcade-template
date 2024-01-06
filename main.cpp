@@ -11,9 +11,15 @@ extern "C" {
 #define SCREEN_WIDTH	640
 #define SCREEN_HEIGHT	480
 #define SPAWN_X 0.0
-#define SPAWN_Y 0.0
-#define BORDER_X 1.0
-#define BORDER_Y 1.0
+#define SPAWN_Y 3.84
+#define BORDER_X_OFFSET 0.4
+#define BORDER_Y_OFFSET 0.0
+
+
+struct CollistionBox {
+	int x;
+	int y;
+};
 
 
 // narysowanie napisu txt na powierzchni screen, zaczynaj¹c od punktu (x, y)
@@ -91,6 +97,58 @@ void DrawRectangle(SDL_Surface *screen, int x, int y, int l, int k,
 		DrawLine(screen, x + 1, i, l - 2, 1, 0, fillColor);
 	};
 
+// rysowanie prostok¹ta o d³ugoœci boków l i k
+// draw a rectangle of size l by k
+void DrawPlatform(SDL_Surface* screen, SDL_Surface* sprite, int x, int y, int h, int n, int orientation) {
+	if (orientation) {
+		for (int i = 0;i < n;i++)
+		{
+			DrawSurface(screen, sprite, h/2 + h * (i+x), SCREEN_HEIGHT - h/2 - y*h);
+			//DrawRectangle(screen, h / 2 + h * (i + x) - h / 2, SCREEN_HEIGHT - h - y * h, h, h, 0x000000, 0x000000);
+
+		}
+	}
+	else {
+		for (int i = 0;i < n;i++)
+		{
+			DrawSurface(screen, sprite, h / 2 + x * h, SCREEN_HEIGHT - h / 2 - h * (i + y));
+
+		}
+	
+	
+	}
+};
+
+
+double* CalculateBorder(int first, int h, int n) {
+	static double tab[2];
+
+	//h=32
+
+	double start = -(double)SCREEN_WIDTH / 100;
+
+	double x1 = start + (double)first * 2*h/100;
+	double x2 = start + (double)(first+n) * 2 * h / 100;
+
+	tab[0] = x1;
+	tab[1] = x2;
+	
+	return tab;
+}
+
+int GetFloor(double distance, double distanceY)
+{
+	int dist = 32+distanceY * 100;
+
+	dist/=64;
+
+	return dist;
+}
+
+
+
+
+
 
 // main
 #ifdef __cplusplus
@@ -102,6 +160,7 @@ int main(int argc, char **argv) {
 	SDL_Event event;
 	SDL_Surface *screen, *charset;
 	SDL_Surface *eti;
+	SDL_Surface *box;
 	SDL_Texture *scrtex;
 	SDL_Window *window;
 	SDL_Renderer *renderer;
@@ -137,7 +196,7 @@ int main(int argc, char **argv) {
 	SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
-	SDL_SetWindowTitle(window, "Jan Bancerewicz, s198099");
+	//SDL_SetWindowTitle(window, "Jan Bancerewicz, s198099");
 
 
 	screen = SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 32,
@@ -180,6 +239,19 @@ int main(int argc, char **argv) {
 		return 1;
 		};
 
+	box = SDL_LoadBMP("./images/box.bmp");
+
+	if (box == NULL) {
+		printf("SDL_LoadBMP(images/box.bmp) error: %s\n", SDL_GetError());
+		SDL_FreeSurface(charset);
+		SDL_FreeSurface(screen);
+		SDL_DestroyTexture(scrtex);
+		SDL_DestroyWindow(window);
+		SDL_DestroyRenderer(renderer);
+		SDL_Quit();
+		return 1;
+	};
+
 	char text[128];
 	int czarny = SDL_MapRGB(screen->format, 0x00, 0x00, 0x00);
 	int zielony = SDL_MapRGB(screen->format, 0x00, 0xFF, 0x00);
@@ -214,13 +286,51 @@ int main(int argc, char **argv) {
 
 		worldTime += delta;
 
+		//poruszanie sie w poziomie
 
-		//distance += etiSpeed * delta;
-		if (distance <(BORDER_X * SCREEN_WIDTH / 100) && distance >-(BORDER_X * SCREEN_WIDTH / 100)) {
-		distance += etiSpeed * delta;}
-		else { distance -= etiSpeed * 0.04; }
-		//distanceY += etiSpeedY * delta;
-		if (distanceY <(BORDER_Y * SCREEN_HEIGHT / 100) && distanceY >-(BORDER_Y * SCREEN_HEIGHT / 100)) {
+		//int dist = round(distanceY);
+		double number = CalculateBorder(4, 32, 12)[0];
+		double number2 = CalculateBorder(4, 32, 12)[1];
+
+
+		/*switch (dist) {
+		case 4:
+			
+
+			if (distance <= number2 && distance > number) {
+				distance += etiSpeed * delta;
+			}
+			else { distance -= etiSpeed * 0.04; }
+			
+			break;
+		
+		default:
+			if (distance <(BORDER_X_OFFSET + SCREEN_WIDTH / 100) && distance >-(BORDER_X_OFFSET + SCREEN_WIDTH / 100)) {
+			distance += etiSpeed * delta;}
+			else { distance -= etiSpeed * 0.04; }
+			break;
+		}*/
+		
+			if (distance <(BORDER_X_OFFSET + SCREEN_WIDTH / 100) && distance >-(BORDER_X_OFFSET + SCREEN_WIDTH / 100)) {
+			distance += etiSpeed * delta;}
+			else { distance -= etiSpeed * 0.04; }
+
+
+
+			/*double number = CalculateBorder(4, 32, 12)[0];
+			double number2 = CalculateBorder(4, 32, 12)[1];*/
+
+			/*if (distance <= number2 && distance > number) {
+				distance += etiSpeed * delta;
+			}
+			else { distance -= etiSpeed * 0.04; }*/
+
+
+		//poruszanie sie w pionie
+		
+
+		
+		if (distanceY <(BORDER_Y_OFFSET + SCREEN_HEIGHT / 100) && distanceY >-(BORDER_Y_OFFSET + SCREEN_HEIGHT / 100)) {
 			distanceY += etiSpeedY * delta;
 		}
 		else { distanceY -= etiSpeedY * 0.04; }
@@ -233,12 +343,15 @@ int main(int argc, char **argv) {
 			    SCREEN_HEIGHT / 2 + cos(distance) * SCREEN_HEIGHT / 3);*/
 
 		DrawSurface(screen, eti,
-		            SCREEN_WIDTH / 2 + distance * SCREEN_HEIGHT / 10,
+		            SCREEN_WIDTH / 2 +4 + distance * SCREEN_HEIGHT / 10,
 			SCREEN_HEIGHT/2 + distanceY * SCREEN_HEIGHT / 10);
+
+
+		int number3 = GetFloor(distance, distanceY);
 
 		char logtext[128];
 
-		sprintf(logtext, "distance = %.1lf, distanceY = %.1lf", distance, distanceY);
+		sprintf(logtext, "distance = %.2lf, distanceY = %.2lf, limit = %.2lf , %.2lf, floor: %.2d", distance, distanceY , number, number2, number3);
 
 		SDL_SetWindowTitle(window, logtext);
 
@@ -250,11 +363,6 @@ int main(int argc, char **argv) {
 			fpsTimer -= 0.5;
 			};
 
-		/*SDL_Surface* surface = SDL_GetWindowSurface(window);
-		Uint32 skyblue = SDL_MapRGB(surface->format, 65, 193, 193);
-		SDL_FillRect(surface, NULL, skyblue);
-		SDL_UpdateWindowSurface(window);*/
-
 		// tekst informacyjny / info text
 		DrawRectangle(screen, 4, 4, SCREEN_WIDTH - 8, 36, czerwony, niebieski);
 		//            "template for the second project, elapsed time = %.1lf s  %.0lf frames / s"
@@ -264,13 +372,31 @@ int main(int argc, char **argv) {
 		sprintf(text, "Esc - exit, arrows - move, n - new game");
 		DrawString(screen, screen->w / 2 - strlen(text) * 8 / 2, 26, text, charset);
 
+		
+
+
+		//draw the floor
+		DrawRectangle(screen, 0, SCREEN_HEIGHT-32, SCREEN_WIDTH, 32, czerwony, niebieski);
+
+		//draw platform
+		DrawPlatform(screen, box, 4, 0, 32, 12, 1);
+
+		//draw ladder
+		DrawPlatform(screen, box, 7, 1, 32, 8, 0);
+
+		//draw platform 2
+		DrawPlatform(screen, box, 2, 4, 32, 6, 1);
+
+		//draw platform 3
+		DrawPlatform(screen, box, 10, 4, 32, 6, 1);
+		
+
+
+
 		SDL_UpdateTexture(scrtex, NULL, screen->pixels, screen->pitch);
-//		SDL_RenderClear(renderer);
+		//SDL_RenderClear(renderer);
 		SDL_RenderCopy(renderer, scrtex, NULL, NULL);
 		SDL_RenderPresent(renderer);
-
-
-		
 
 		// obs³uga zdarzeñ (o ile jakieœ zasz³y) / handling of events (if there were any)
 		while(SDL_PollEvent(&event)) {
