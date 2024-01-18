@@ -19,13 +19,14 @@ extern "C" {
 #define MOVESPEED_X 3.0
 #define PLATFORMS 5
 #define LADDERS 5
-#define DEBUG_MODE 1
+#define DEBUG_MODE 0
 #define TIMER 120.0
 #define PRINCESS_SPAWN_X -3.7
 #define PRINCESS_SPAWN_Y -2.8
 #define KING_SPAWN_X -1.65
 #define KING_SPAWN_Y -2.8
 #define STUDENT_MODE 0
+#define FULLSCREEN 0
 
 
 
@@ -41,8 +42,8 @@ struct LadderInfo {
 };
 
 
-// narysowanie napisu txt na powierzchni screen, zaczynaj¹c od punktu (x, y)
-// charset to bitmapa 128x128 zawieraj¹ca znaki
+// narysowanie napisu txt na powierzchni screen, zaczynajï¿½c od punktu (x, y)
+// charset to bitmapa 128x128 zawierajï¿½ca znaki
 // draw a text txt on surface screen, starting from the point (x, y)
 // charset is a 128x128 bitmap containing character images
 void DrawString(SDL_Surface *screen, int x, int y, const char *text,
@@ -67,9 +68,18 @@ void DrawString(SDL_Surface *screen, int x, int y, const char *text,
 		};
 	};
 
+void ThrowError(SDL_Surface* screen, SDL_Texture* scrtex, SDL_Window* window, SDL_Renderer* renderer)
+{
+	printf("SDL_LoadBMP(images/missingfile) error: %s\n", SDL_GetError());
+	SDL_FreeSurface(screen);
+	SDL_DestroyTexture(scrtex);
+	SDL_DestroyWindow(window);
+	SDL_DestroyRenderer(renderer);
+	SDL_Quit();
+}
 
 // narysowanie na ekranie screen powierzchni sprite w punkcie (x, y)
-// (x, y) to punkt œrodka obrazka sprite na ekranie
+// (x, y) to punkt ï¿½rodka obrazka sprite na ekranie
 // draw a surface sprite on a surface screen in point (x, y)
 // (x, y) is the center of sprite on screen
 void DrawSurface(SDL_Surface *screen, SDL_Surface *sprite, int x, int y) {
@@ -91,8 +101,8 @@ void DrawPixel(SDL_Surface *surface, int x, int y, Uint32 color) {
 	};
 
 
-// rysowanie linii o d³ugoœci l w pionie (gdy dx = 0, dy = 1) 
-// b¹dŸ poziomie (gdy dx = 1, dy = 0)
+// rysowanie linii o dï¿½ugoï¿½ci l w pionie (gdy dx = 0, dy = 1) 
+// bï¿½dï¿½ poziomie (gdy dx = 1, dy = 0)
 // draw a vertical (when dx = 0, dy = 1) or horizontal (when dx = 1, dy = 0) line
 void DrawLine(SDL_Surface *screen, int x, int y, int l, int dx, int dy, Uint32 color) {
 	for(int i = 0; i < l; i++) {
@@ -103,7 +113,7 @@ void DrawLine(SDL_Surface *screen, int x, int y, int l, int dx, int dy, Uint32 c
 	};
 
 
-// rysowanie prostok¹ta o d³ugoœci boków l i k
+// rysowanie prostokï¿½ta o dï¿½ugoï¿½ci bokï¿½w l i k
 // draw a rectangle of size l by k
 void DrawRectangle(SDL_Surface *screen, int x, int y, int l, int k,
                    Uint32 outlineColor, Uint32 fillColor) {
@@ -116,24 +126,39 @@ void DrawRectangle(SDL_Surface *screen, int x, int y, int l, int k,
 		DrawLine(screen, x + 1, i, l - 2, 1, 0, fillColor);
 	};
 
-// rysowanie prostok¹ta o d³ugoœci boków l i k
+// rysowanie prostokï¿½ta o dï¿½ugoï¿½ci bokï¿½w l i k
 // draw a rectangle of size l by k
 void DrawPlatform(SDL_Surface* screen, SDL_Surface* sprite, int x, int y, int h, int n, int orientation) {
 	if (orientation) {
 		for (int i = 0;i < n;i++)
 		{
 			DrawSurface(screen, sprite, h/2 + h * (i+x), SCREEN_HEIGHT - h/2 - y*h);
-
 		}
 	}
 	else {
 		for (int i = 0;i < n;i++)
 		{
 			DrawSurface(screen, sprite, h / 2 + x * h, SCREEN_HEIGHT - h / 2 - h * (i + y));
-
 		}
 	}
 };
+
+
+void FreeTheMemory(SDL_Surface* screen, SDL_Texture* scrtex, SDL_Window* window, SDL_Renderer* renderer, SDL_Surface* charset, SDL_Surface* princess, SDL_Surface* ladder, SDL_Surface* box, SDL_Surface* king, SDL_Surface* player)
+{
+	SDL_FreeSurface(charset);
+	SDL_FreeSurface(princess);
+	SDL_FreeSurface(ladder);
+	SDL_FreeSurface(box);
+	SDL_FreeSurface(king);
+	SDL_FreeSurface(player);
+	SDL_FreeSurface(screen);
+	SDL_DestroyTexture(scrtex);
+	SDL_DestroyWindow(window);
+	SDL_DestroyRenderer(renderer);
+	SDL_Quit();
+}
+
 
 
 double* CalculateBorder(int first, int h, int n) {
@@ -180,6 +205,155 @@ double GetDistanceX(int tile)
 	return dist;
 }
 
+void DrawImages(SDL_Surface *screen, SDL_Surface *player, SDL_Surface *princess, SDL_Surface *king, double distance, double distanceY)
+{
+	int offset = (STUDENT_MODE ? 0 : 20);
+	int czarny = SDL_MapRGB(screen->format, 0x00, 0x00, 0x00);
+
+
+	SDL_FillRect(screen, NULL, czarny);
+
+	DrawSurface(screen, player, SCREEN_WIDTH / 2 + distance * SCREEN_HEIGHT / 10, SCREEN_HEIGHT / 2 + distanceY * SCREEN_HEIGHT / 10);
+
+	DrawSurface(screen, princess, SCREEN_WIDTH / 2 + PRINCESS_SPAWN_X * SCREEN_HEIGHT / 10, SCREEN_HEIGHT / 2 + PRINCESS_SPAWN_Y * SCREEN_HEIGHT / 10 + offset);
+
+	DrawSurface(screen, king, SCREEN_WIDTH / 2 + KING_SPAWN_X * SCREEN_HEIGHT / 10, SCREEN_HEIGHT / 2 + KING_SPAWN_Y * SCREEN_HEIGHT / 10);
+}
+
+void DrawInfoText(SDL_Surface* screen, SDL_Surface* charset, double worldTime, double fps)
+{
+	char text[128];
+	int czarny = SDL_MapRGB(screen->format, 0x00, 0x00, 0x00);
+	int czerwony = SDL_MapRGB(screen->format, 0xFF, 0x00, 0x00);
+	int niebieski = SDL_MapRGB(screen->format, 0x11, 0x11, 0xCC);
+
+	DrawRectangle(screen, 4, 4, SCREEN_WIDTH - 8, 36, czerwony, niebieski);
+	//            "template for the second project, elapsed time = %.1lf s  %.0lf frames / s"
+	sprintf(text, "King Donkey by Jan Bancerewicz, TIME = %.1lf s  %.0lf fps", worldTime, fps);
+	DrawString(screen, screen->w / 2 - strlen(text) * 8 / 2, 10, text, charset);
+	//	      "Esc - exit, \030 - faster, \031 - slower"
+	sprintf(text, "Esc - exit, arrows - move, n - new game / requirements met: 12345");
+	DrawString(screen, screen->w / 2 - strlen(text) * 8 / 2, 26, text, charset);
+
+
+	//draw the floor
+	DrawRectangle(screen, 0, SCREEN_HEIGHT - 32, SCREEN_WIDTH, 32, niebieski, niebieski);
+}
+
+SDL_Surface loadBMP(const char* path)
+{
+	SDL_Surface* loadedSurface = SDL_LoadBMP(path);
+	if (loadedSurface == NULL)
+	{
+		printf("Unable to load image %s! SDL Error: %s\n", path, SDL_GetError());
+	}
+	return *loadedSurface;
+}
+
+void Move(double *distance, double *distanceY, double moveSpeed, double moveSpeedY, double delta, SDL_Window* window)
+{
+
+	//calculate the borders
+	PlatformInfo p;
+	LadderInfo l;
+
+	//horizontal movement
+
+	int playerY = GetFloor(*distanceY);
+	int playerX = GetTile(*distance);
+	int custX = 0, custY = 0;
+	double newtabX[2] = { 0,0 };
+	double newtabY[2] = { 0,0 };
+	double limY[2] = { GetDistanceY(playerY) , GetDistanceY(playerY) - 0.64 };
+	double limX[2] = { GetDistanceX(playerX) , GetDistanceX(playerX) + 0.64 };
+
+	for (int i = 0;i < PLATFORMS;i++)
+	{
+		if (playerY == p.t[i][1] + 1 && (playerX >= p.t[i][0] - 1 && playerX <= p.t[i][0] + p.t[i][2]))
+		{
+			double limX[2] = { GetDistanceX(p.t[i][0]) , GetDistanceX(p.t[i][0] + p.t[i][2]) };
+			newtabX[0] = limX[0];
+			newtabX[1] = limX[1];
+
+			custX = 1;
+		}
+	}
+
+	//if custom platform
+	if (custX)
+	{
+		if (*distance <newtabX[1] && *distance >newtabX[0]) {
+			*distance += moveSpeed * delta;
+		}
+		else { *distance -= moveSpeed * PUSHBACK; }
+	}
+	else
+	{
+		if (newtabX[0] != 0 && newtabX[1] != 0)
+		{
+			if (*distance <(BORDER_X_OFFSET + SCREEN_WIDTH / 100) && *distance >-(BORDER_X_OFFSET + SCREEN_WIDTH / 100)) {
+				*distance += moveSpeed * delta;
+			}
+			else { *distance -= moveSpeed * PUSHBACK; }
+		}
+	}
+
+
+	//vertical movement
+
+	for (int i = 0;i < LADDERS;i++)
+	{
+		if (playerX == l.t[i][0] && (playerY >= l.t[i][1] && playerY <= l.t[i][1] + l.t[i][2]))
+		{
+			double limY[2] = { GetDistanceY(l.t[i][1]) , GetDistanceY(l.t[i][1] + l.t[i][2]) - 0.64 };
+			newtabY[0] = limY[0];
+			newtabY[1] = limY[1];
+
+			custY = 1;
+		}
+	}
+
+	//if custom ladder
+	if (custY)
+	{
+		if (*distanceY <newtabY[0] - 0.16 && *distanceY >newtabY[1]) {
+			*distanceY += moveSpeedY * delta;
+		}
+		else { *distanceY -= moveSpeedY * PUSHBACK; }
+	}
+	else
+	{
+		if (newtabY[0] == 0 && newtabY[1] == 0)
+		{
+			if (newtabX[0] == 0 && newtabX[1] == 0)
+			{
+				*distanceY -= moveSpeedY * PUSHBACK;
+			}
+		}
+		else
+		{
+			if (*distanceY <(BORDER_Y_OFFSET + SCREEN_HEIGHT / 100) && *distanceY >-(BORDER_Y_OFFSET + SCREEN_HEIGHT / 100)) {
+				*distanceY += moveSpeedY * delta;
+			}
+			else { *distanceY -= moveSpeedY * PUSHBACK; }
+		}
+
+	}
+
+	//logging and debugmode
+
+	if (DEBUG_MODE) {
+		char logtext[256];
+		sprintf(logtext, "dist{ %.2lf , %.2lf }, floor: %.2d, tile: %.2d, X{ %.2lf , %.2lf }, Y{ %.2lf , %.2lf }", *distance, *distanceY, playerY, playerX, newtabX[0], newtabX[1], newtabY[0], newtabY[1]);
+		SDL_SetWindowTitle(window, logtext);
+	}
+	else {
+		SDL_SetWindowTitle(window, "Jan Bancerewicz, s198099");
+	}
+
+}
+
+
 
 
 
@@ -191,38 +365,20 @@ int main(int argc, char **argv) {
 	int t1, t2, quit, frames, rc;
 	double delta, worldTime, fpsTimer, fps, distance, distanceY, moveSpeed, moveSpeedY;
 	SDL_Event event;
-	SDL_Surface *screen, *charset;
-	SDL_Surface *player;
-	SDL_Surface *king;
-	SDL_Surface *box;
-	SDL_Surface *princess;
-	SDL_Surface *ladder;
+	SDL_Surface *screen, *charset, *princess, *ladder, *box, *king, *player;
 	SDL_Texture *scrtex;
 	SDL_Window *window;
 	SDL_Renderer *renderer;
-	
 
-	// okno konsoli nie jest widoczne, je¿eli chcemy zobaczyæ
-	// komunikaty wypisywane printf-em trzeba w opcjach:
-	// project -> szablon2 properties -> Linker -> System -> Subsystem
-	// zmieniæ na "Console"
-	// console window is not visible, to see the printf output
-	// the option:
-	// project -> szablon2 properties -> Linker -> System -> Subsystem
-	// must be changed to "Console"
-	printf("wyjscie printfa trafia do tego okienka\n");
-	printf("printf output goes here\n");
 
 	if(SDL_Init(SDL_INIT_EVERYTHING) != 0) {
 		printf("SDL_Init error: %s\n", SDL_GetError());
 		return 1;
 		}
 
-	// tryb pe³noekranowy / fullscreen mode
-//	rc = SDL_CreateWindowAndRenderer(0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP,
-//	                                 &window, &renderer);
-	rc = SDL_CreateWindowAndRenderer(SCREEN_WIDTH, SCREEN_HEIGHT, 0,
-	                                 &window, &renderer);
+	rc =(FULLSCREEN ? SDL_CreateWindowAndRenderer(0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP, &window, &renderer) :
+		SDL_CreateWindowAndRenderer(SCREEN_WIDTH, SCREEN_HEIGHT, 0, &window, &renderer));
+	
 	if(rc != 0) {
 		SDL_Quit();
 		printf("SDL_CreateWindowAndRenderer error: %s\n", SDL_GetError());
@@ -233,110 +389,60 @@ int main(int argc, char **argv) {
 	SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
-
-
-	screen = SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 32,
-	                              0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
-
-	scrtex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
-	                           SDL_TEXTUREACCESS_STREAMING,
-	                           SCREEN_WIDTH, SCREEN_HEIGHT);
-
-
-	// wy³¹czenie widocznoœci kursora myszy
 	SDL_ShowCursor(SDL_DISABLE);
+
+	screen = SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+
+	scrtex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+	
 
 	// wczytanie obrazka cs8x8.bmp
 	charset = SDL_LoadBMP("./images/cs8x8.bmp");
 	
 	if(charset == NULL) {
-		printf("SDL_LoadBMP(images/cs8x8.bmp) error: %s\n", SDL_GetError());
-		SDL_FreeSurface(screen);
-		SDL_DestroyTexture(scrtex);
-		SDL_DestroyWindow(window);
-		SDL_DestroyRenderer(renderer);
-		SDL_Quit();
+		ThrowError(screen,scrtex,window,renderer);
 		return 1;
 		};
 	SDL_SetColorKey(charset, true, 0x000000);
 
+
+	// load the images
 	player = SDL_LoadBMP("./images/player.bmp");
-	
 	if(player == NULL) {
-		printf("SDL_LoadBMP(images/player.bmp) error: %s\n", SDL_GetError());
-		SDL_FreeSurface(charset);
-		SDL_FreeSurface(screen);
-		SDL_DestroyTexture(scrtex);
-		SDL_DestroyWindow(window);
-		SDL_DestroyRenderer(renderer);
-		SDL_Quit();
+		ThrowError(screen, scrtex, window, renderer);
 		return 1;
 		};
 
 	king = SDL_LoadBMP("./images/monkey.bmp");
-
 	if (king == NULL) {
-		printf("SDL_LoadBMP(images/player.bmp) error: %s\n", SDL_GetError());
-		SDL_FreeSurface(charset);
-		SDL_FreeSurface(screen);
-		SDL_DestroyTexture(scrtex);
-		SDL_DestroyWindow(window);
-		SDL_DestroyRenderer(renderer);
-		SDL_Quit();
+		ThrowError(screen, scrtex, window, renderer);
 		return 1;
 	};
 
 	box = SDL_LoadBMP("./images/box.bmp");
-
 	if (box == NULL) {
-		printf("SDL_LoadBMP(images/box.bmp) error: %s\n", SDL_GetError());
-		SDL_FreeSurface(charset);
-		SDL_FreeSurface(screen);
-		SDL_DestroyTexture(scrtex);
-		SDL_DestroyWindow(window);
-		SDL_DestroyRenderer(renderer);
-		SDL_Quit();
+		ThrowError(screen, scrtex, window, renderer);
 		return 1;
 	};
 
 	ladder = SDL_LoadBMP("./images/ladder.bmp");
-
 	if (ladder == NULL) {
-		printf("SDL_LoadBMP(images/ladder.bmp) error: %s\n", SDL_GetError());
-		SDL_FreeSurface(charset);
-		SDL_FreeSurface(screen);
-		SDL_DestroyTexture(scrtex);
-		SDL_DestroyWindow(window);
-		SDL_DestroyRenderer(renderer);
-		SDL_Quit();
+		ThrowError(screen, scrtex, window, renderer);
 		return 1;
 	};
 
-	if (STUDENT_MODE)
-	{
+	if (STUDENT_MODE){
 		princess = SDL_LoadBMP("./images/princess.bmp");
-	}
-	else
-	{
+	}else{
 		princess = SDL_LoadBMP("./images/pixelart.bmp");
 	}
 
 	if (princess == NULL) {
-		printf("SDL_LoadBMP(images/princess.bmp) error: %s\n", SDL_GetError());
-		SDL_FreeSurface(charset);
-		SDL_FreeSurface(screen);
-		SDL_DestroyTexture(scrtex);
-		SDL_DestroyWindow(window);
-		SDL_DestroyRenderer(renderer);
-		SDL_Quit();
+		ThrowError(screen, scrtex, window, renderer);
 		return 1;
 	};
 
-	char text[128];
-	int czarny = SDL_MapRGB(screen->format, 0x00, 0x00, 0x00);
-	int zielony = SDL_MapRGB(screen->format, 0x00, 0xFF, 0x00);
-	int czerwony = SDL_MapRGB(screen->format, 0xFF, 0x00, 0x00);
-	int niebieski = SDL_MapRGB(screen->format, 0x11, 0x11, 0xCC);
 
 	t1 = SDL_GetTicks();
 
@@ -356,9 +462,6 @@ int main(int argc, char **argv) {
 	while(!quit) {
 		t2 = SDL_GetTicks();
 
-		// w tym momencie t2-t1 to czas w milisekundach,
-		// jaki uplyna³ od ostatniego narysowania ekranu
-		// delta to ten sam czas w sekundach
 		// here t2-t1 is the time in milliseconds since
 		// the last screen was drawn
 		// delta is the same time in seconds
@@ -369,129 +472,14 @@ int main(int argc, char **argv) {
 			worldTime -= delta;
 		}
 
+		// move the player
+		Move(&distance, &distanceY, moveSpeed, moveSpeedY, delta, window);
+
 		PlatformInfo p;
 		LadderInfo l;
 
-		//horizontal movement
-
-		int playerY = GetFloor(distanceY);
-		int playerX = GetTile(distance);
-		int custX = 0, custY = 0;
-		double newtabX[2] = {0,0};
-		double newtabY[2] = {0,0};
-		double limY[2] = { GetDistanceY(playerY) , GetDistanceY(playerY) - 0.64 };
-		double limX[2] = { GetDistanceX(playerX) , GetDistanceX(playerX) + 0.64 };
-		
-		for (int i = 0;i < PLATFORMS;i++)
-		{
-			if (playerY == p.t[i][1] +1 &&(playerX >= p.t[i][0] -1 && playerX <= p.t[i][0] + p.t[i][2]))
-			{
-				double limX[2] = { GetDistanceX(p.t[i][0]) , GetDistanceX(p.t[i][0] + p.t[i][2])};
-				newtabX[0] = limX[0];
-				newtabX[1] = limX[1];
-				
-				custX = 1;
-			}
-		}
-		
-		//if custom platform
-		if (custX)
-		{
-			if (distance <newtabX[1] && distance >newtabX[0]) {
-				distance += moveSpeed * delta;
-			}
-			else { distance -= moveSpeed * PUSHBACK; }
-		}
-		else
-		{
-			if(newtabX[0] != 0 && newtabX[1] != 0)
-			{
-				if (distance <(BORDER_X_OFFSET + SCREEN_WIDTH / 100) && distance >-(BORDER_X_OFFSET + SCREEN_WIDTH / 100)) {
-					distance += moveSpeed * delta;
-				}
-				else { distance -= moveSpeed * PUSHBACK; }
-			}
-		}
-
-
-		//vertical movement
-		
-		for (int i = 0;i < LADDERS;i++)
-		{
-			if (playerX == l.t[i][0] && (playerY >= l.t[i][1] && playerY <= l.t[i][1] + l.t[i][2]))
-			{
-				double limY[2] = { GetDistanceY(l.t[i][1]) , GetDistanceY(l.t[i][1] + l.t[i][2])-0.64 };
-				newtabY[0] = limY[0];
-				newtabY[1] = limY[1];
-
-				custY = 1;
-			}
-		}
-
-		//if custom ladder
-		if (custY)
-		{
-			if (distanceY <newtabY[0]-0.16 && distanceY >newtabY[1]) {
-				distanceY += moveSpeedY * delta;
-			}
-			else { distanceY -= moveSpeedY * PUSHBACK; }
-		}
-		else
-		{
-			if (newtabY[0] == 0 && newtabY[1] == 0)
-			{
-				if (newtabX[0] == 0 && newtabX[1] == 0)
-				{
-					distanceY -= moveSpeedY * PUSHBACK;
-				}
-			}
-			else
-			{
-				if (distanceY <(BORDER_Y_OFFSET + SCREEN_HEIGHT / 100) && distanceY >-(BORDER_Y_OFFSET + SCREEN_HEIGHT / 100)) {
-					distanceY += moveSpeedY * delta;
-				}
-				else { distanceY -= moveSpeedY * PUSHBACK; }
-			}
-			
-		}
-
-		/*if (distanceY <(BORDER_Y_OFFSET + SCREEN_HEIGHT / 100) && distanceY >-(BORDER_Y_OFFSET + SCREEN_HEIGHT / 100)) {
-			distanceY += moveSpeedY * delta;
-		}
-		else { distanceY -= moveSpeedY * PUSHBACK; }*/
-
-
-		int offset = (STUDENT_MODE ? 0 : 20);
-
-		SDL_FillRect(screen, NULL, czarny);
-
-
-		DrawSurface(screen, player, SCREEN_WIDTH / 2 + distance * SCREEN_HEIGHT / 10, SCREEN_HEIGHT/2 + distanceY * SCREEN_HEIGHT / 10);
-
-		DrawSurface(screen, princess, SCREEN_WIDTH / 2 + PRINCESS_SPAWN_X * SCREEN_HEIGHT / 10 , SCREEN_HEIGHT / 2 + PRINCESS_SPAWN_Y * SCREEN_HEIGHT / 10 + offset);
-		
-		DrawSurface(screen, king, SCREEN_WIDTH / 2 + KING_SPAWN_X * SCREEN_HEIGHT / 10 , SCREEN_HEIGHT / 2 + KING_SPAWN_Y * SCREEN_HEIGHT / 10);
-
-
-		
-		//logging and debugmode
-
-		if (DEBUG_MODE)
-		{
-			char logtext[256];
-
-			//Y = %.2lf , %.2lf, X = %.2lf , %.2lf 
-			//limY[0], limY[1], limX[0], limX[1]
-			sprintf(logtext, "dist{ %.2lf , %.2lf }, floor: %.2d, tile: %.2d, X{ %.2lf , %.2lf }, Y{ %.2lf , %.2lf }", distance, distanceY, playerY, playerX, newtabX[0], newtabX[1], newtabY[0], newtabY[1]);
-
-			SDL_SetWindowTitle(window, logtext);
-		}
-		else
-		{
-			SDL_SetWindowTitle(window, "Jan Bancerewicz, s198099");
-		}
-		
-
+		// draw all images here
+		DrawImages(screen, player, princess, king, distance, distanceY);
 
 		fpsTimer += delta;
 		if(fpsTimer > 0.5) {
@@ -501,19 +489,9 @@ int main(int argc, char **argv) {
 			};
 
 		// tekst informacyjny / info text
-		DrawRectangle(screen, 4, 4, SCREEN_WIDTH - 8, 36, czerwony, niebieski);
-		//            "template for the second project, elapsed time = %.1lf s  %.0lf frames / s"
-		sprintf(text, "King Donkey by Jan Bancerewicz, TIME = %.1lf s  %.0lf fps", worldTime, fps);
-		DrawString(screen, screen->w / 2 - strlen(text) * 8 / 2, 10, text, charset);
-		//	      "Esc - exit, \030 - faster, \031 - slower"
-		sprintf(text, "Esc - exit, arrows - move, n - new game / requirements met: 12345");
-		DrawString(screen, screen->w / 2 - strlen(text) * 8 / 2, 26, text, charset);
+		DrawInfoText(screen, charset, worldTime, fps);
 
-		
-		//draw the floor
-		DrawRectangle(screen, 0, SCREEN_HEIGHT-32, SCREEN_WIDTH, 32, niebieski, niebieski);
 
-		
 		//draw the platforms
 
 		for (int i = 0;i < PLATFORMS;i++)
@@ -533,7 +511,7 @@ int main(int argc, char **argv) {
 		SDL_RenderCopy(renderer, scrtex, NULL, NULL);
 		SDL_RenderPresent(renderer);
 
-		// obs³uga zdarzeñ (o ile jakieœ zasz³y) / handling of events (if there were any)
+		// obsluga zdarzen (o ile jakies zaszly) / handling of events (if there were any)
 		while(SDL_PollEvent(&event)) {
 			switch(event.type) {
 				case SDL_KEYDOWN:
@@ -559,12 +537,6 @@ int main(int argc, char **argv) {
 		};
 
 	// zwolnienie powierzchni / freeing all surfaces
-	SDL_FreeSurface(charset);
-	SDL_FreeSurface(screen);
-	SDL_DestroyTexture(scrtex);
-	SDL_DestroyRenderer(renderer);
-	SDL_DestroyWindow(window);
-
-	SDL_Quit();
+	FreeTheMemory(screen, scrtex, window, renderer, charset, princess, ladder, box, king, player);
 	return 0;
 	};
