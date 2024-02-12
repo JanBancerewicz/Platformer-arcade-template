@@ -348,7 +348,7 @@ void Move(double *distance, double *distanceY, double moveSpeed, double moveSpee
 		SDL_SetWindowTitle(window, logtext);
 	}
 	else {
-		SDL_SetWindowTitle(window, "Jan Bancerewicz, s198099");
+		SDL_SetWindowTitle(window, "Platformer template");
 	}
 
 }
