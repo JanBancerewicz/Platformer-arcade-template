@@ -11,7 +11,7 @@ This is a classic platformer game playground inspired by arcade-type 2D games ba
 1.Clone this repository:
 
 ```bash
-  git clone https://github.com/JanBancerewicz/Backgammon-board-game.git
+  git clone https://github.com/JanBancerewicz/Platformer-arcade-template.git
 ```
 
 2. **Open the Source Code:** Use Visual Studio or VSC (make sure you have C compiler installed on your device).
